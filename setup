@@ -4,7 +4,7 @@ declare -A CONFIG # bash 4 specific syntax
 COMMON="--env=PUID=1000 --env=PGID=1001 --env=TZ=America/New_York --restart=always"
 CONFIG=(
   ["qbittorrentvpn"]='--env=VPN_ENABLED=yes --env=LAN_NETWORK=192.168.1.0/24 --env=WEBUI_PORT=8181 --env=WEBUI_PORT_ENV=8181 --env=UMASK=002 --volume=/media/downloads:/downloads --privileged --expose=8080 -p 8999:8999/udp -p 8181:8181 -p 8999:8999' \
-  ["plex"]="--volume=/media/shows:/data/tvshows --volume=/media/movies:/data/movies --network=host --device /dev/dri:/dev/dri" \
+  ["plex"]="--volume=/media:/media --volume=/media/shows:/data/tvshows --volume=/media/movies:/data/movies --network=host --device /dev/dri:/dev/dri" \
   ["jackett"]="--volume=/media/downloads:/downloads -p 9117:9117" \
   ["sonarr"]="--volume=/media/shows:/tv --volume=/media/downloads:/downloads -p 8989:8989" \
   ["radarr"]="--volume=/media/movies:/movies --volume=/media/downloads:/downloads -p 7878:7878"
