@@ -3,19 +3,21 @@
 declare -A CONFIG # bash 4 specific syntax
 COMMON="--env=PUID=1000 --env=PGID=1001 --env=TZ=America/New_York --restart=always"
 CONFIG=(
-  ["qbittorrentvpn"]='--env=VPN_ENABLED=yes --env=LAN_NETWORK=192.168.1.0/24 --env=WEBUI_PORT=8181 --env=WEBUI_PORT_ENV=8181 --env=UMASK=002 --volume=/media/downloads:/downloads --privileged --expose=8080 -p 8999:8999/udp -p 8181:8181 -p 8999:8999' \
-  ["plex"]="--volume=/media:/media --volume=/media/shows:/data/tvshows --volume=/media/movies:/data/movies --network=host --device /dev/dri:/dev/dri" \
+  ["couchpotato"]="--volume=/media/movies:/movies --volume=/media/downloads:/downloads -p 5050:5050"
   ["jackett"]="--volume=/media/downloads:/downloads -p 9117:9117" \
-  ["sonarr"]="--volume=/media/shows:/tv --volume=/media/downloads:/downloads -p 8989:8989" \
+  ["plex"]="--volume=/media:/media --volume=/media/shows:/data/tvshows --volume=/media/movies:/data/movies --network=host --device /dev/dri:/dev/dri" \
+  ["qbittorrentvpn"]='--env=VPN_ENABLED=yes --env=LAN_NETWORK=192.168.1.0/24 --env=WEBUI_PORT=8181 --env=WEBUI_PORT_ENV=8181 --env=UMASK=002 --volume=/media/downloads:/downloads --privileged --expose=8080 -p 8999:8999/udp -p 8181:8181 -p 8999:8999' \
   ["radarr"]="--volume=/media/movies:/movies --volume=/media/downloads:/downloads -p 7878:7878"
+  ["sonarr"]="--volume=/media/shows:/tv --volume=/media/downloads:/downloads -p 8989:8989" \
 )
 CONFIG_DIR=/misc/config
 IMAGES=(
-  "markusmcnugen/qbittorrentvpn" \
-  "linuxserver/plex" \
+  "linuxserver/couchpotato" \
   "linuxserver/jackett" \
+  "linuxserver/plex" \
+  "linuxserver/radarr" \
   "linuxserver/sonarr" \
-  "linuxserver/radarr"
+  "markusmcnugen/qbittorrentvpn"
 )
 
 for image in ${IMAGES[@]}
@@ -29,6 +31,9 @@ do
     docker stop $name 2>/dev/null 1>&2
     echo "Removing ${name}..."
     docker rm $name 2>/dev/null 1>&2
+  fi
+  if [ ! -d $CONFIG_DIR/$name ]; then
+    mkdir $CONFIG_DIR/$name
   fi
   echo "Creating ${name}..."
   docker create --name=$name --volume=$CONFIG_DIR/${name}:/config ${CONFIG[$name]} $COMMON $image 2>/dev/null 1>&2
