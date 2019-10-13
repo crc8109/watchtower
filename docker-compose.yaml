@@ -1,0 +1,65 @@
+version: '3'
+services:
+  jackett:
+    image: linuxserver/jackett
+    environment:
+    - PGID=${PGID}
+    - PUID=${PUID}
+    - TZ=America/New_York
+    ports:
+    - "9117:9117"
+    restart: unless-stopped
+    volumes:
+    - /config/jackett:/config
+    - /downloads:/downloads
+  plex:
+    devices:
+    - "/dev/dri:/dev/dri"
+    environment:
+    - PGID=${PGID}
+    - PUID=${PUID}
+    - TZ=America/New_York
+    - VERSION=docker
+    expose:
+    - "32400"
+    image: linuxserver/plex
+    network_mode: "host"
+    restart: unless-stopped
+    volumes:
+    - /config/plex:/config
+    - /movies:/data/movies
+    - /tv:/data/tvshows
+  qbittorrentvpn:
+    image: markusmcnugen/qbittorrentvpn
+    environment:
+    - LAN_NETWORK=192.168.1.0/24
+    - NAME_SERVERS=8.8.8.8,8.8.4.4
+    - PGID=${PGID}
+    - PUID=${PUID}
+    - VPN_ENABLED=yes
+    - WEBUI_PORT=8181
+    - WEBUI_PORT_ENV=8181
+    expose:
+    - "8181"
+    ports:
+    - "8181:8181"
+    - "8999:8999"
+    - "8999:8999/udp"
+    privileged: true
+    restart: unless-stopped
+    volumes:
+    - /config/qbittorrentvpn:/config
+    - /downloads:/downloads
+  sonarr:
+    image: linuxserver/sonarr
+    environment:
+    - PUID=${PUID}
+    - PGID=${PGID}
+    - TZ=America/New_York
+    ports:
+    - "8989:8989"
+    restart: unless-stopped
+    volumes:
+    - /config/sonarr:/config
+    - /downloads:/downloads
+    - /tv:/tv

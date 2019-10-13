@@ -1,0 +1,19 @@
+# /etc/systemd/system/docker-compose.service
+
+[Unit]
+Description=Docker Compose Service
+Requires=docker.service
+After=docker.service
+
+[Service]
+Environment=PUID=1000
+Environment=PGID=1001
+Restart=always
+RemainAfterExit=yes
+WorkingDirectory=/var/lib/docker
+ExecStart=/usr/bin/docker-compose -f /etc/docker/docker-compose.yaml up -d
+ExecStop=/usr/bin/docker-compose -f /etc/docker/docker-compose.yaml down
+TimeoutStartSec=0
+
+[Install]
+WantedBy=multi-user.target

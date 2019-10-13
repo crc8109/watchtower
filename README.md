@@ -1,1 +1,1 @@
-# watchtower
+# WatchtowerConfigurations for my HTPC. Using docker-compose to deploy the following:* Jackett* Plex* QbitTorrent* Sonarr## NotesThis configuration is somewhat unique to my setup. Please update the volume mounts and environment variables to fit your needs.See docker-compose.service for a systemd example that deploys containers at startup.
