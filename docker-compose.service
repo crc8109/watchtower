@@ -11,6 +11,7 @@ Environment=PGID=1001
 Restart=always
 RemainAfterExit=yes
 WorkingDirectory=/var/lib/docker
+ExecStartPre=/usr/bin/docker-compose -f /etc/docker/docker-compose.yaml pull
 ExecStart=/usr/bin/docker-compose -f /etc/docker/docker-compose.yaml up -d
 ExecStop=/usr/bin/docker-compose -f /etc/docker/docker-compose.yaml down
 TimeoutStartSec=0
