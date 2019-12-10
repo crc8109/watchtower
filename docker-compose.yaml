@@ -1,16 +1,11 @@
 version: "3"
-networks:
-  web:
-    external: true
 services:
   jackett:
     image: linuxserver/jackett
     container_name: jackett
     volumes:
-    - /config/jackett:/config
-    - /downloads:/downloads
-    networks:
-    - web
+    - ${CONFIG_PATH}/jackett:/config
+    - ${MEDIA_PATH}/downloads:/downloads
     environment:
     - PGID=${PGID}
     - PUID=${PUID}
@@ -20,32 +15,36 @@ services:
     - "traefik.frontend.rule=Host:jackett.${DOMAIN}"
     - "traefik.port=9117"
   plex:
-    image: linuxserver/plex
+    image: plexinc/pms-docker
     container_name: plex
     devices:
     - /dev/dri:/dev/dri
+    hostname: plex.${DOMAIN}
+    restart: unless-stopped
     volumes:
-    - /config/plex:/config
-    - /movies:/data/movies
-    - /tv:/data/tvshows
-    network_mode: host
-    expose:
-    - 32400
+    - ${CONFIG_PATH}/plex:/config
+    - ${PLEX_PATH}/data:/data
+    - ${PLEX_PATH}/transcode:/transcode
+    - ${MEDIA_PATH}/movies:/data/movies
+    - ${MEDIA_PATH}/shows:/data/tvshows
     environment:
-    - PUID=${PUID}
-    - PGID=${PGID}
-    - TZ=${TZ}
-    - VERSION=docker
+    - ADVERTISE_IP="http://watchtower.${DOMAIN}:32400/"
+    - PLEX_CLAIM="${PLEX_CLAIM}"
+    - PLEX_GID=${PGID}
+    - PLEX_UID=${PUID}
+    - TZ="${TZ}"
+    labels:
+    - "traefik.enable=true"
+    - "traefik.frontend.rule=Host:watchtower.${DOMAIN}"
+    - "traefik.port=32400"
   portainer:
     image: portainer/portainer
     container_name: portainer
     command: -H unix:///var/run/docker.sock
     volumes:
+    - ${CONFIG_PATH}/portainer/data:/data
+    - ${CONFIG_PATH}/shared:/shared
     - /var/run/docker.sock:/var/run/docker.sock
-    - /config/portainer/data:/data
-    - /config/shared:/shared
-    networks:
-    - web
     environment:
     - TZ=${TZ}
     labels:
@@ -56,15 +55,11 @@ services:
     image: markusmcnugen/qbittorrentvpn
     container_name: qbt
     privileged: true
-    volumes:
-    - /config/qbt:/config
-    - /downloads:/downloads
-    networks:
-    - web
     ports:
     - 8181:8181
-    - 8999:8999
-    - 8999:8999/udp
+    volumes:
+    - ${CONFIG_PATH}/qbt:/config
+    - ${MEDIA_PATH}/downloads:/downloads
     environment:
     - LAN_NETWORK=192.168.1.0/24
     - NAME_SERVERS=8.8.8.8,8.8.4.4
@@ -82,11 +77,9 @@ services:
     image: linuxserver/sonarr
     container_name: sonarr
     volumes:
-    - /config/sonarr:/config
-    - /downloads:/downloads
-    - /tv:/tv
-    networks:
-    - web
+    - ${CONFIG_PATH}/sonarr:/config
+    - ${MEDIA_PATH}/downloads:/downloads
+    - ${MEDIA_PATH}/shows:/tv
     environment:
     - PUID=${PUID}
     - PGID=${PGID}
@@ -96,26 +89,25 @@ services:
     - "traefik.frontend.rule=Host:sonarr.${DOMAIN}"
     - "traefik.port=8989"
   traefik:
-    image: traefik:1.7.2-alpine
+    image: traefik:1.7.16
     container_name: traefik
     volumes:
+    - ${CONFIG_PATH}/traefik/acme.json:/acme.json
+    - ${CONFIG_PATH}/traefik/traefik.toml:/traefik.toml
     - /var/run/docker.sock:/var/run/docker.sock
-    - /config/traefik/traefik.toml:/traefik.toml
-    - /config/traefik/acme.json:/acme.json
-    networks:
-    - web
+    command: --web
+    network_mode: host
     ports:
     - 443:443
     - 80:80
     labels:
+    - "traefik.backend=web"
     - "traefik.enable=true"
     - "traefik.frontend.rule=Host:traefik.${DOMAIN}"
     - "traefik.port=8080"
   whoami:
     image: containous/whoami
     container_name: "whoami"
-    networks:
-    - web
     labels:
     - "traefik.enable=true"
     - "traefik.frontend.rule=Host:whoami.${DOMAIN}"
