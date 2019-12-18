@@ -21,6 +21,7 @@ services:
     - /dev/dri:/dev/dri
     hostname: plex.${DOMAIN}
     restart: unless-stopped
+    network_mode: host
     volumes:
     - ${CONFIG_PATH}/plex:/config
     - ${PLEX_PATH}/data:/data
@@ -28,8 +29,6 @@ services:
     - ${MEDIA_PATH}/movies:/data/movies
     - ${MEDIA_PATH}/shows:/data/tvshows
     environment:
-    - ADVERTISE_IP="https://watchtower.${DOMAIN}:32400/"
-    - PLEX_CLAIM="${PLEX_CLAIM}"
     - PLEX_GID=${PGID}
     - PLEX_UID=${PUID}
     - TZ="${TZ}"
@@ -73,6 +72,23 @@ services:
     - "traefik.enable=true"
     - "traefik.frontend.rule=Host:qbt.${DOMAIN}"
     - "traefik.port=8181"
+  radarr:
+    image: linuxserver/radarr
+    container_name: radarr
+    ports:
+    - 7878:7878
+    volumes:
+    - ${CONFIG_PATH}/config:/config
+    - ${MEDIA_PATH}/movies:/movies
+    - ${MEDIA_PATH}/downloads:/downloads
+    environment:
+    - PUID=${PUID}
+    - PGID=${PGID}
+    - TZ=${TZ}
+    labels:
+    - "traefik.enable=true"
+    - "traefik.frontend.rule=Host:radarr.${DOMAIN}"
+    - "traefik.port=7878"
   sonarr:
     image: linuxserver/sonarr
     container_name: sonarr
