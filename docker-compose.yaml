@@ -56,6 +56,8 @@ services:
     privileged: true
     ports:
     - 8181:8181
+    - 8999:8999/tcp
+    - 8999:8999/udp
     volumes:
     - ${CONFIG_PATH}/qbt:/config
     - ${MEDIA_PATH}/downloads:/downloads
@@ -66,7 +68,6 @@ services:
     - PUID=${PUID}
     - TZ=${TZ}
     - VPN_ENABLED=yes
-    - WEBUI_PORT=8181
     - WEBUI_PORT_ENV=8181
     labels:
     - "traefik.enable=true"
@@ -75,8 +76,6 @@ services:
   radarr:
     image: linuxserver/radarr
     container_name: radarr
-    ports:
-    - 7878:7878
     volumes:
     - ${CONFIG_PATH}/config:/config
     - ${MEDIA_PATH}/movies:/movies
