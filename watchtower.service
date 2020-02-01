@@ -1,0 +1,20 @@
+# /etc/systemd/system/watchtower.service
+
+[Unit]
+Description=Watchtower Composition
+Requires=docker.service
+After=docker.service
+
+[Service]
+EnvironmentFile=/etc/watchtower/override.conf
+
+RemainAfterExit=yes
+Type=oneshot
+WorkingDirectory=/etc/watchtower
+
+ExecStartPre=/usr/bin/docker-compose -f watchtower.yaml pull
+ExecStart=/usr/bin/docker-compose -f watchtower.yaml up -d
+ExecStop=/usr/bin/docker-compose -f watchtower.yaml down -v
+
+[Install]
+WantedBy=multi-user.target

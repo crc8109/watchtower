@@ -7,7 +7,7 @@
 # https://github.com/jovalle/watchtower
 #
 
-VERSION="0.0.1"
+VERSION="v0.0.2"
 
 #
 # Output usage information
@@ -20,10 +20,9 @@ usage() {
     -V, --version        output program version
     -h, --help           output help information
   Commands:
-    install              run create commands
-    configure            run create commands
-    deploy               run create commands
-    uninstall            run create commands
+    prepare              install required packages
+    start                onboard zfs pools and service
+    delete               stop and disable service
 EOF
 }
 
@@ -50,13 +49,12 @@ version() {
 # Update/upgrade/install packages
 #
 
-install() {
+prepare() {
   apt update -y
   apt upgrade -y
 
   apt install -y \
     dnsutils \
-    docker-compose \
     git \
     glances \
     net-tools \
@@ -68,6 +66,7 @@ install() {
   add-apt-repository 'deb http://deb.debian.org/debian buster-backports main contrib non-free'
   apt update
   apt install -y \
+    docker-compose \
     zfs-dkms \
     zfsutils-linux
 }
@@ -76,71 +75,64 @@ install() {
 # Configure zfs, systemd unit
 #
 
-configure() {
+start() {
   command -v zpool 2>/dev/null 1>&2 || abort zpool not installed
 
-  for pool in media misc
-  do
-    if [[ $(zpool list | tail -n +2 | awk '{print $1}' | grep $pool) ]]
-    then
+  for pool in media misc; do
+    if [[ $(zpool list $pool) ]]; then
       echo "zfs pool $pool FOUND"
     else
       echo "zfs pool $pool NOT FOUND! Importing..."
       [[ ! -d /mnt/$pool ]] && mkdir -p /mnt/$pool
       zpool import -f $pool
-      echo "zfs pool $pool IMPORTED"
+      [[ $? ]] && echo "zfs pool $pool IMPORTED" || abort "zfs pool $pool IMPORT FAILED"
     fi
   done
 
-  test -d /etc/watchtower || abort jovalle/watchtower must reside in /etc/watchtower
+  test -d /etc/watchtower || abort "jovalle/watchtower must reside in /etc/watchtower"
 
-  if [[ ! -f /etc/systemd/system/docker-compose.service ]]
-  then
+  if [[ ! -f /etc/systemd/system/watchtower.service ]]; then
     pushd /etc/systemd/system
-    ln -s /etc/watchtower/config/systemd/docker-compose.service
+    ln -s /etc/watchtower/watchtower.service
     popd
   fi
-}
 
+  test -f /etc/systemd/system/watchtower.service && systemctl daemon-reload || abort "watchtower.service not found"
 
-#
-# Initiate systemd unit and thus watchtower
-#
-
-deploy() {
-  systemctl daemon-reload
-  if [[ $(systemctl status docker-compose) ]]
-  then
-    systemctl restart docker-compose
-    systemctl enable docker-compose
+  systemctl status watchtower &>/dev/null
+  if [[ $? -ne 0 ]]; then
+    echo "Watchtower NOT running. Restarting service..."
+    systemctl restart watchtower
+  else
+    echo "Watchtower running"
   fi
+
+  systemctl enable watchtower
 }
 
 #
 # Stop and remove watchtower services
 #
 
-uninstall() {
-  systemctl stop docker-compose
-  systemctl disable docker-compose
-  test -f /etc/systemd/system/docker-compose && rm -f /etc/systemd/system/docker-compose
+delete() {
+  systemctl stop watchtower
+  systemctl disable watchtower
+  test -f /etc/systemd/system/watchtower.service && rm -f /etc/systemd/system/watchtower.service
 }
 
 #
 # Parse argv
 #
 
-while test $# -ne 0
-do
+while test $# -ne 0; do
   arg=$1
   shift
   case $arg in
     -h|--help) usage; exit ;;
-    -V|--version) version; exit ;;
-    install) install; ;;
-    configure) configure; ;;
-    deploy) deploy; ;;
-    uninstall) uninstall; ;;
+    -v|--version) version; exit ;;
+    prepare) prepare; ;;
+    start) start; ;;
+    delete) delete; ;;
     *) usage; exit ;;
   esac
 done

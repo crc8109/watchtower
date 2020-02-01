@@ -27,3 +27,6 @@ See config/systemd/docker-compose.service for an example that updates/deploys co
 | PLEX_PATH   | /var/lib/plex              |
 
 If not using a systemd unit, be sure to define in your env or modify compose manifest.
+
+### Traefik
+Certs are obviously not included here. Let's Encrypt is highly recommended for a quick and easy HTTPS bundle.

@@ -77,7 +77,7 @@ services:
     image: linuxserver/radarr
     container_name: radarr
     volumes:
-    - ${CONFIG_PATH}/config:/config
+    - ${CONFIG_PATH}/radarr:/config
     - ${MEDIA_PATH}/movies:/movies
     - ${MEDIA_PATH}/downloads:/downloads
     environment:
