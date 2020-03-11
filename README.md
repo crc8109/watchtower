@@ -13,7 +13,7 @@ Using docker-compose to deploy the following:
 * whoami
 
 ## systemd
-See config/systemd/docker-compose.service for an example that updates/deploys containers at system startup.
+See watchtower.service
 
 ### Environment File
 | Key         | Value                      |
@@ -28,5 +28,5 @@ See config/systemd/docker-compose.service for an example that updates/deploys co
 
 If not using a systemd unit, be sure to define in your env or modify compose manifest.
 
-### Traefik
-Certs are obviously not included here. Let's Encrypt is highly recommended for a quick and easy HTTPS bundle.
+## Traefik
+Certs are obviously not included here. Use Let's Encrypt for a quick and easy HTTPS bundle. Be sure to create a wildcard cert.
