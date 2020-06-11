@@ -67,8 +67,14 @@ prepare() {
   apt update
   apt install -y \
     docker-compose \
+    htop \
+    iotop \
+    mediainfo \
+    ncdu \
     zfs-dkms \
     zfsutils-linux
+
+  modprobe zfs
 }
 
 #

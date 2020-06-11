@@ -5,7 +5,7 @@ defaultEntryPoints = ["https", "http"]
   address = ":8080"
     [entryPoints.dashboard.auth]
       [entryPoints.dashboard.auth.basic]
-      users = ["admin:%%HTPASSWD%%"]
+      usersFile = "/.htpasswd"
   [entryPoints.http]
   address = ":80"
     [entryPoints.http.redirect]
@@ -22,6 +22,5 @@ entrypoint = "dashboard"
 
 [docker]
 endpoint = "unix:///var/run/docker.sock"
-domain = "%%DOMAIN%%"
 watch = true
 exposedbydefault = false
