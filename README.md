@@ -17,3 +17,14 @@ Using docker-compose to deploy the following:
 * sonarr
 * traefik
 
+## Environment File
+
+Set to ```.env```. Referenced in the systemd unit and in each Docker Compose service that supports PUID/PGID env vars. Contains much of the following:
+
+```
+DOMAIN=example.com
+PGID=1000
+PUID=1000
+TZ="America/New_York"
+```
+
