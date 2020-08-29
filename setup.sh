@@ -21,7 +21,7 @@ usage() {
     -h, --help           output help information
   Commands:
     prepare              install required packages
-    start                onboard zfs pools and service
+    deploy               onboard zfs pools and service
     delete               stop and disable service
 EOF
 }
@@ -50,50 +50,46 @@ version() {
 #
 
 prepare() {
+
+  add-apt-repository 'deb http://deb.debian.org/debian buster-backports main contrib non-free'
+
   apt update -y
   apt upgrade -y
 
   apt install -y \
+    apache2-utils \
     dnsutils \
+    docker-compose \
+    firmware-realtek \
     git \
     glances \
-    net-tools \
-    samba \
-    software-properties-common \
-    tmux \
-    vim
-
-  add-apt-repository 'deb http://deb.debian.org/debian buster-backports main contrib non-free'
-  apt update
-  apt install -y \
-    docker-compose \
     htop \
     iotop \
     mediainfo \
     ncdu \
+    net-tools \
+    samba \
+    software-properties-common \
+    ssh \
+    tmux \
+    vim \
     zfs-dkms \
     zfsutils-linux
 
   modprobe zfs
+
+  [[ ! -d $HOME/.ssh ]] && mkdir -p $HOME/.ssh
+  curl -L https://github.com/jovalle.keys >> ~/.ssh/authorized_keys
 }
 
 #
-# Configure zfs, systemd unit
+# Configure zfs, systemd unit, Samba
 #
 
-start() {
+deploy() {
   command -v zpool 2>/dev/null 1>&2 || abort zpool not installed
 
-  for pool in media misc; do
-    if [[ $(zpool list $pool) ]]; then
-      echo "zfs pool $pool FOUND"
-    else
-      echo "zfs pool $pool NOT FOUND! Importing..."
-      [[ ! -d /mnt/$pool ]] && mkdir -p /mnt/$pool
-      zpool import -f $pool
-      [[ $? ]] && echo "zfs pool $pool IMPORTED" || abort "zfs pool $pool IMPORT FAILED"
-    fi
-  done
+  zpool import -a || abort "Failed to import pools"
 
   test -d /etc/watchtower || abort "jovalle/watchtower must reside in /etc/watchtower"
 
@@ -114,6 +110,13 @@ start() {
   fi
 
   systemctl enable watchtower
+
+  if [[ -f /etc/samba/smb.conf && ! -L /etc/samba/smb.conf ]]; then
+    mv /etc/samba/smb.conf /etc/samba/smb.conf.$(date +%s)
+    ln -s /etc/watchtower/smb.conf /etc/samba/smb.conf
+  fi
+
+  systemctl restart smbd
 }
 
 #
@@ -137,7 +140,7 @@ while test $# -ne 0; do
     -h|--help) usage; exit ;;
     -v|--version) version; exit ;;
     prepare) prepare; ;;
-    start) start; ;;
+    deploy) deploy; ;;
     delete) delete; ;;
     *) usage; exit ;;
   esac

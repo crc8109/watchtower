@@ -7,8 +7,8 @@ services:
     - traefik
     env_file: .env
     volumes:
-    - /config/jackett:/config
-    - /media/downloads:/downloads
+    - /var/lib/misc/config/jackett:/config
+    - /var/lib/misc/downloads:/downloads
     labels:
     - traefik.enable=true
     - traefik.frontend.rule=Host:jackett.${DOMAIN}
@@ -24,11 +24,11 @@ services:
     - /dev/dri:/dev/dri
     hostname: watchtower.${DOMAIN}
     volumes:
-    - /config/plex:/config
+    - /var/lib/misc/config/plex:/config
     - /var/lib/plex/data:/data
     - /var/lib/plex/transcode:/transcode
-    - /media/movies:/data/movies
-    - /media/shows:/data/tvshows
+    - /var/lib/media/movies:/data/movies
+    - /var/lib/media/shows:/data/tvshows
     labels:
     - traefik.enable=true
     - traefik.frontend.rule=Host:watchtower.${DOMAIN}
@@ -41,8 +41,8 @@ services:
     env_file: .env
     command: -H unix:///var/run/docker.sock
     volumes:
-    - /config/portainer/data:/data
-    - /config/shared:/shared
+    - /var/lib/misc/config/portainer/data:/data
+    - /var/lib/misc/config/shared:/shared
     - /var/run/docker.sock:/var/run/docker.sock
     labels:
     - traefik.enable=true
@@ -67,9 +67,9 @@ services:
     expose:
     - 8181
     volumes:
-    - /config/qbt:/config
-    - /media/downloads:/downloads
-    - /media:/media
+    - /var/lib/misc/config/qbt:/config
+    - /var/lib/misc/downloads:/downloads
+    - /var/lib/media:/media
     labels:
     - traefik.enable=true
     - traefik.frontend.rule=Host:qbt.${DOMAIN}
@@ -83,9 +83,9 @@ services:
     - traefik
     env_file: .env
     volumes:
-    - /config/radarr:/config
-    - /media/movies:/movies
-    - /media/downloads:/downloads
+    - /var/lib/misc/config/radarr:/config
+    - /var/lib/media/movies:/movies
+    - /var/lib/misc/downloads:/downloads
     labels:
     - traefik.enable=true
     - traefik.frontend.rule=Host:radarr.${DOMAIN}
@@ -99,9 +99,9 @@ services:
     - traefik
     env_file: .env
     volumes:
-    - /config/sonarr:/config
-    - /media/downloads:/downloads
-    - /media/shows:/tv
+    - /var/lib/misc/config/sonarr:/config
+    - /var/lib/misc/downloads:/downloads
+    - /var/lib/media/shows:/tv
     labels:
     - traefik.enable=true
     - traefik.frontend.rule=Host:sonarr.${DOMAIN}
@@ -118,8 +118,8 @@ services:
     - 8080
     command: --web
     volumes:
-    - /config/traefik/fullchain.pem:/cert.pem
-    - /config/traefik/privkey.pem:/privkey.pem
+    - /var/lib/misc/config/traefik/fullchain.pem:/cert.pem
+    - /var/lib/misc/config/traefik/privkey.pem:/privkey.pem
     - ./traefik/traefik.toml:/traefik.toml
     - ./traefik/.htpasswd:/.htpasswd
     - /var/run/docker.sock:/var/run/docker.sock
@@ -140,7 +140,7 @@ services:
     command:
     - --config.file=/etc/prometheus/prometheus.yml
     volumes:
-    - /config/prometheus:/prometheus
+    - /var/lib/misc/config/prometheus:/prometheus
     - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
     labels:
     - traefik.enable=true
@@ -176,7 +176,7 @@ services:
     ports:
     - 3000:3000
     volumes:
-    - /config/grafana:/var/lib/grafana
+    - /var/lib/misc/config/grafana:/var/lib/grafana
     - ./grafana/provisioning/:/etc/grafana/provisioning/
     labels:
     - traefik.enable=true
