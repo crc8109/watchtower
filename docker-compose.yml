@@ -6,23 +6,39 @@ services:
     depends_on:
     - traefik
     env_file: .env
+    ports:
+    - 9117:9117/tcp
     volumes:
     - /var/lib/misc/config/jackett:/config
     - /var/lib/misc/downloads:/downloads
     labels:
     - traefik.enable=true
-    - traefik.frontend.rule=Host:jackett.${DOMAIN}
-    - traefik.port=9117
+    - traefik.http.routers.jackett.rule=Host(`jackett.${DOMAIN}`)
+    - traefik.http.routers.jackett.entrypoints=websecure
+    - traefik.http.routers.jackett.tls.certresolver=mydnschallenge
+    - traefik.http.services.jackett.loadbalancer.server.port=9117
   plex:
     image: plexinc/pms-docker
     container_name: plex
     depends_on:
     - traefik
     env_file: .env
-    network_mode: host
+    hostname: watchtower.${DOMAIN}
+    ports:
+    - 1900:1900/udp
+    - 3005:3005/tcp
+    - 8324:8324/tcp
+    - 32400:32400/tcp
+    - 32410:32410/udp
+    - 32412:32412/udp
+    - 32413:32413/udp
+    - 32414:32414/udp
+    - 32469:32469/tcp
+    environment:
+    - PLEX_CLAIM=${CLAIM}
+    - ADVERTISE_IP="https://watchtower.${DOMAIN}"
     devices:
     - /dev/dri:/dev/dri
-    hostname: watchtower.${DOMAIN}
     volumes:
     - /var/lib/misc/config/plex:/config
     - /var/lib/plex/data:/data
@@ -31,8 +47,10 @@ services:
     - /var/lib/media/shows:/data/tvshows
     labels:
     - traefik.enable=true
-    - traefik.frontend.rule=Host:watchtower.${DOMAIN}
-    - traefik.port=32400
+    - traefik.http.routers.plex.rule=Host(`watchtower.${DOMAIN}`)
+    - traefik.http.routers.plex.entrypoints=websecure
+    - traefik.http.routers.plex.tls.certresolver=mydnschallenge
+    - traefik.http.services.plex.loadbalancer.server.port=32400
   portainer:
     image: portainer/portainer
     container_name: portainer
@@ -46,8 +64,9 @@ services:
     - /var/run/docker.sock:/var/run/docker.sock
     labels:
     - traefik.enable=true
-    - traefik.frontend.rule=Host:portainer.${DOMAIN}
-    - traefik.port=9000
+    - traefik.http.routers.portainer.rule=Host(`portainer.${DOMAIN}`)
+    - traefik.http.routers.portainer.entrypoints=websecure
+    - traefik.http.routers.portainer.tls.certresolver=mydnschallenge
   qbittorrentvpn:
     image: markusmcnugen/qbittorrentvpn
     container_name: qbt
@@ -64,16 +83,16 @@ services:
     - 8181:8181
     - 8999:8999/tcp
     - 8999:8999/udp
-    expose:
-    - 8181
     volumes:
     - /var/lib/misc/config/qbt:/config
     - /var/lib/misc/downloads:/downloads
     - /var/lib/media:/media
     labels:
     - traefik.enable=true
-    - traefik.frontend.rule=Host:qbt.${DOMAIN}
-    - traefik.port=8181
+    - traefik.http.routers.qbt.rule=Host(`qbt.${DOMAIN}`)
+    - traefik.http.routers.qbt.entrypoints=websecure
+    - traefik.http.routers.qbt.tls.certresolver=mydnschallenge
+    - traefik.http.services.qbt.loadbalancer.server.port=8181
   radarr:
     image: linuxserver/radarr
     container_name: radarr
@@ -82,14 +101,18 @@ services:
     - qbittorrentvpn
     - traefik
     env_file: .env
+    ports:
+    - 7878:7878
     volumes:
     - /var/lib/misc/config/radarr:/config
     - /var/lib/media/movies:/movies
     - /var/lib/misc/downloads:/downloads
     labels:
     - traefik.enable=true
-    - traefik.frontend.rule=Host:radarr.${DOMAIN}
-    - traefik.port=7878
+    - traefik.http.routers.radarr.rule=Host(`radarr.${DOMAIN}`)
+    - traefik.http.routers.radarr.entrypoints=websecure
+    - traefik.http.routers.radarr.tls.certresolver=mydnschallenge
+    - traefik.http.services.radarr.loadbalancer.server.port=7878
   sonarr:
     image: linuxserver/sonarr
     container_name: sonarr
@@ -98,35 +121,18 @@ services:
     - qbittorrentvpn
     - traefik
     env_file: .env
+    ports:
+    - 8989:8989
     volumes:
     - /var/lib/misc/config/sonarr:/config
     - /var/lib/misc/downloads:/downloads
     - /var/lib/media/shows:/tv
     labels:
     - traefik.enable=true
-    - traefik.frontend.rule=Host:sonarr.${DOMAIN}
-    - traefik.port=8989
-  traefik:
-    image: traefik:1.7.16
-    container_name: traefik
-    env_file: .env
-    network_mode: host
-    ports:
-    - 80:80
-    - 443:443
-    expose:
-    - 8080
-    command: --web
-    volumes:
-    - /var/lib/misc/config/traefik/fullchain.pem:/cert.pem
-    - /var/lib/misc/config/traefik/privkey.pem:/privkey.pem
-    - ./traefik/traefik.toml:/traefik.toml
-    - ./traefik/.htpasswd:/.htpasswd
-    - /var/run/docker.sock:/var/run/docker.sock
-    labels:
-    - traefik.enable=true
-    - traefik.frontend.rule=Host:traefik.${DOMAIN}
-    - traefik.port=8080
+    - traefik.http.routers.sonarr.rule=Host(`sonarr.${DOMAIN}`)
+    - traefik.http.routers.sonarr.entrypoints=websecure
+    - traefik.http.routers.sonarr.tls.certresolver=mydnschallenge
+    - traefik.http.services.sonarr.loadbalancer.server.port=8989
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus
@@ -142,10 +148,6 @@ services:
     volumes:
     - /var/lib/misc/config/prometheus:/prometheus
     - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-    labels:
-    - traefik.enable=true
-    - traefik.frontend.rule=Host:prometheus.${DOMAIN}
-    - traefik.port=9090
   cadvisor:
     image: google/cadvisor:latest
     container_name: cadvisor
@@ -158,13 +160,6 @@ services:
     - /var/run:/var/run:rw
     - /sys:/sys:ro
     - /var/lib/docker/:/var/lib/docker:ro
-    depends_on:
-    - redis
-  redis:
-    image: redis:latest
-    container_name: redis
-    ports:
-    - 6379:6379
   grafana:
     image: grafana/grafana
     container_name: grafana
@@ -180,8 +175,10 @@ services:
     - ./grafana/provisioning/:/etc/grafana/provisioning/
     labels:
     - traefik.enable=true
-    - traefik.frontend.rule=Host:grafana.${DOMAIN}
-    - traefik.port=3000
+    - traefik.http.routers.grafana.rule=Host(`grafana.${DOMAIN}`)
+    - traefik.http.routers.grafana.entrypoints=websecure
+    - traefik.http.routers.grafana.tls.certresolver=mydnschallenge
+    - traefik.http.services.grafana.loadbalancer.server.port=3000
   node-exporter:
     image: prom/node-exporter
     container_name: node-exporter
@@ -203,3 +200,35 @@ services:
     env_file: .env
     ports:
     - 9093:9093
+  traefik:
+    image: traefik:v2.2
+    container_name: traefik
+    env_file: .env
+    command:
+    - --api.insecure=true
+    - --providers.docker=true
+    - --providers.docker.exposedbydefault=false
+    - --entrypoints.web.address=:80
+    - --entrypoints.websecure.address=:443
+    - --certificatesresolvers.mydnschallenge.acme.dnschallenge=true
+    - --certificatesresolvers.mydnschallenge.acme.dnschallenge.provider=cloudflare
+    - --certificatesresolvers.mydnschallenge.acme.email=${EMAIL}
+    - --certificatesresolvers.mydnschallenge.acme.storage=/letsencrypt/acme.json
+    environment:
+    - CF_API_EMAIL=${EMAIL}
+    - CF_API_KEY=${CF_API_KEY}
+    ports:
+    - 80:80
+    - 443:443
+    - 8080:8080
+    volumes:
+    - ./letsencrypt:/letsencrypt
+    - /var/run/docker.sock:/var/run/docker.sock:ro
+  whoami:
+    image: containous/whoami
+    container_name: whoami
+    labels:
+    - traefik.enable=true
+    - traefik.http.routers.whoami.rule=Host(`whoami.${DOMAIN}`)
+    - traefik.http.routers.whoami.entrypoints=websecure
+    - traefik.http.routers.whoami.tls.certresolver=mydnschallenge
