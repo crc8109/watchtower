@@ -1,2 +1,5 @@
 .*
+config
+downloads
 letsencrypt/
+media

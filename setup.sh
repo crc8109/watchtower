@@ -65,6 +65,7 @@ prepare() {
     glances \
     htop \
     iotop \
+    lm-sensors \
     mediainfo \
     ncdu \
     net-tools \
@@ -87,6 +88,8 @@ prepare() {
 #
 
 deploy() {
+  command -v sensors-detect 2>/dev/null 1>&2 && sensors-detect --auto || warn lm-sensors not installed
+
   command -v zpool 2>/dev/null 1>&2 || abort zpool not installed
 
   zpool import -a || abort "Failed to import pools"
