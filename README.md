@@ -2,21 +2,6 @@
 
 Configurations for my HTPC.
 
-Using docker-compose to deploy the following:
-* alertmanager
-* cadvisor
-* grafana
-* jackett
-* node-exporter
-* plex
-* portainer
-* prometheus
-* qbittorrentvpn
-* radarr
-* redis
-* sonarr
-* traefik
-
 ## Environment File
 
 Set to `.env`. Referenced in the systemd unit and in each Docker Compose service that supports PUID/PGID env vars. Contains much of the following:
@@ -28,16 +13,6 @@ PUID=1000
 TZ="America/New_York"
 ```
 
-## Traefik
-
-Using Traefik as the reverse proxy for serving all of the containers to the home network. Define `.htpasswd` before starting Traefik:
-
-```
-htpasswd -c /etc/watchtower/traefik/.htpasswd admin
-```
-
-Config leverages TLS certs (for my homelab). Update traefik.toml accordingly with your own certs or disable altogether.
-
 ## Known Issues
 
 ### `watchtower.service: Job watchtower.service/start failed with result 'dependency'.`
@@ -45,7 +20,10 @@ Config leverages TLS certs (for my homelab). Update traefik.toml accordingly wit
 
 ## TODO
 
-* automated TLS renewal using Let's Encrypt
-* complete Grafana dashboard
-* convert setup.sh to Makefile
+~~* Automate TLS renewal using Let's Encrypt~~
+* Complete Grafana dashboard
+* Convert setup.sh to Makefile
+* Add Ombi for notifications
+* Add Lidarr for music procurement
+* Add Tautulli for monitoring Plex
 
