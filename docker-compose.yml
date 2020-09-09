@@ -26,7 +26,7 @@ services:
     - traefik
     user: ${PUID}
     volumes:
-    - ./config/grafana:/var/lib/grafana
+    - ${CONFIG_PATH}/grafana:/var/lib/grafana
     - ./grafana/provisioning/:/etc/grafana/provisioning/
     ports:
     - 3000:3000
@@ -39,14 +39,28 @@ services:
     - traefik.http.routers.grafana.entrypoints=websecure
     - traefik.http.routers.grafana.tls.certresolver=mydnschallenge
     - traefik.http.services.grafana.loadbalancer.server.port=3000
+  influxdb:
+    image: influxdb:latest
+    container_name: influxdb
+    volumes:
+    - ./influxdb.conf:/etc/influxdb/influxdb.conf:ro
+    - ${CONFIG_PATH}/influxdb/db:/var/lib/influxdb
+    ports:
+    - 8086:8086
+    - 8089:8089/udp
+    env_file: .env
+    environment:
+    - INFLUXDB_HTTP_ENABLED=true
+    - INFLUXDB_DB=host
+    command: -config /etc/influxdb/influxdb.conf
   jackett:
     image: linuxserver/jackett
     container_name: jackett
     depends_on:
     - traefik
     volumes:
-    - ./config/jackett:/config
-    - ./downloads:/downloads
+    - ${CONFIG_PATH}/jackett:/config
+    - ${DL_PATH}:/downloads
     ports:
     - 9117:9117/tcp
     env_file: .env
@@ -56,6 +70,24 @@ services:
     - traefik.http.routers.jackett.entrypoints=websecure
     - traefik.http.routers.jackett.tls.certresolver=mydnschallenge
     - traefik.http.services.jackett.loadbalancer.server.port=9117
+  lidarr:
+    image: linuxserver/lidarr
+    container_name: lidarr
+    depends_on:
+    - traefik
+    volumes:
+    - ${CONFIG_PATH}/lidarr:/config
+    - ${DL_PATH}:/downloads
+    - ${MEDIA_PATH}/music:/music
+    ports:
+    - 8686:8686
+    env_file: .env
+    labels:
+    - traefik.enable=true
+    - traefik.http.routers.lidarr.rule=Host(`lidarr.${DOMAIN}`)
+    - traefik.http.routers.lidarr.entrypoints=websecure
+    - traefik.http.routers.lidarr.tls.certresolver=mydnschallenge
+    - traefik.http.services.lidarr.loadbalancer.server.port=8686
   node-exporter:
     image: prom/node-exporter
     container_name: node-exporter
@@ -80,11 +112,11 @@ services:
     devices:
     - /dev/dri:/dev/dri
     volumes:
-    - ./config/plex:/config
+    - ${CONFIG_PATH}/plex:/config
     - /var/lib/plex/data:/data
     - /var/lib/plex/transcode:/transcode
-    - ./media/movies:/data/movies
-    - ./media/shows:/data/tvshows
+    - ${MEDIA_PATH}/movies:/data/movies
+    - ${MEDIA_PATH}/shows:/data/tvshows
     hostname: watchtower.${DOMAIN}
     ports:
     - 1900:1900/udp
@@ -112,8 +144,8 @@ services:
     depends_on:
     - traefik
     volumes:
-    - ./config/portainer/data:/data
-    - ./config/shared:/shared
+    - ${CONFIG_PATH}/portainer/data:/data
+    - ${CONFIG_PATH}/shared:/shared
     - /var/run/docker.sock:/var/run/docker.sock
     env_file: .env
     command: -H unix:///var/run/docker.sock
@@ -125,12 +157,12 @@ services:
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus
-    user: "1000"
+    user: ${PUID}
     depends_on:
     - cadvisor
     - node-exporter
     volumes:
-    - ./config/prometheus:/prometheus
+    - ${CONFIG_PATH}/prometheus:/prometheus
     - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
     ports:
     - 9090:9090
@@ -144,9 +176,9 @@ services:
     depends_on:
     - traefik
     volumes:
-    - ./config/qbt:/config
-    - ./downloads:/downloads
-    - ./media:/media
+    - ${CONFIG_PATH}/qbt:/config
+    - ${DL_PATH}:/downloads
+    - ${MEDIA_PATH}:/media
     ports:
     - 8181:8181
     - 8999:8999/tcp
@@ -171,9 +203,9 @@ services:
     - qbittorrentvpn
     - traefik
     volumes:
-    - ./config/radarr:/config
-    - ./media/movies:/movies
-    - ./downloads:/downloads
+    - ${CONFIG_PATH}/radarr:/config
+    - ${MEDIA_PATH}movies:/movies
+    - ${DL_PATH}:/downloads
     ports:
     - 7878:7878
     env_file: .env
@@ -191,9 +223,9 @@ services:
     - qbittorrentvpn
     - traefik
     volumes:
-    - ./config/sonarr:/config
-    - ./downloads:/downloads
-    - ./media/shows:/tv
+    - ${CONFIG_PATH}/sonarr:/config
+    - ${DL_PATH}:/downloads
+    - ${MEDIA_PATH}/shows:/tv
     ports:
     - 8989:8989
     env_file: .env
@@ -203,11 +235,55 @@ services:
     - traefik.http.routers.sonarr.entrypoints=websecure
     - traefik.http.routers.sonarr.tls.certresolver=mydnschallenge
     - traefik.http.services.sonarr.loadbalancer.server.port=8989
+  speedtest:
+    image: atribe/speedtest-for-influxdb-and-grafana:latest
+    container_name: speedtest
+    depends_on:
+    - influxdb
+    restart: unless-stopped
+    volumes:
+    - ./speedtest.ini:/src/config.ini:ro
+    network_mode: host
+    env_file: .env
+  tautulli:
+    image: tautulli/tautulli:latest
+    container_name: tautulli
+    depends_on:
+    - traefik
+    volumes:
+    - ${CONFIG_PATH}/tautulli:/config
+    - ${CONFIG_PATH}/Library/Application\ Support/Plex\ Media\ Server/Logs
+    ports:
+    - 8180:8180
+    env_file: .env
+    labels:
+    - traefik.enable=true
+    - traefik.http.routers.tautulli.rule=Host(`tautulli.${DOMAIN}`)
+    - traefik.http.routers.tautulli.entrypoints=websecure
+    - traefik.http.routers.tautulli.tls.certresolver=mydnschallenge
+    - traefik.http.services.tautulli.loadbalancer.server.port=8180
+  telegraf:
+    image: telegraf:latest
+    container_name: telegraf
+    depends_on:
+    - speedtest
+    volumes:
+    - ./telegraf.conf:/etc/telegraf/telegraf.conf:ro
+    - /var/run/docker.sock:/var/run/docker.sock:ro
+    - /sys:/rootfs/sys:ro
+    - /proc:/rootfs/proc:ro
+    - /etc:/rootfs/etc:ro
+    network_mode: host
+    env_file: .env
+    environment:
+    - HOST_PROC=/rootfs/proc
+    - HOST_SYS=/rootfs/sys
+    - HOST_ETC=/rootfs/etc
   traefik:
     image: traefik:v2.2
     container_name: traefik
     volumes:
-    - ./config/letsencrypt:/letsencrypt
+    - ${CONFIG_PATH}/letsencrypt:/letsencrypt
     - /var/run/docker.sock:/var/run/docker.sock:ro
     ports:
     - 80:80
@@ -225,8 +301,19 @@ services:
     - --entrypoints.websecure.address=:443
     - --certificatesresolvers.mydnschallenge.acme.dnschallenge=true
     - --certificatesresolvers.mydnschallenge.acme.dnschallenge.provider=cloudflare
+    - --certificatesresolvers.mydnschallenge.acme.dnschallenge.resolvers=1.1.1.1:53,8.8.8.8:53
     - --certificatesresolvers.mydnschallenge.acme.email=${EMAIL}
     - --certificatesresolvers.mydnschallenge.acme.storage=/letsencrypt/acme.json
+  varken:
+    image: boerderij/varken:latest
+    container_name: varken
+    depends_on:
+    - telegraf
+    user: ${PUID}
+    volumes:
+    - ${CONFIG_PATH}/varken:/config
+    network_mode: host
+    env_file: .env
   whoami:
     image: containous/whoami
     container_name: whoami

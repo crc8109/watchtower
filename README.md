@@ -11,12 +11,21 @@ DOMAIN=example.com
 PGID=1000
 PUID=1000
 TZ="America/New_York"
+CONFIG_PATH=/etc/watchtower
+MEDIA_PATH=/var/lib/media
+DL_PATH=/tmp
 ```
+
+## `network_mode: host`
+Use when 127.0.0.1 is needed, like when referencing `speedtest` service endpoint for `telegraf`.
 
 ## Known Issues
 
 ### `watchtower.service: Job watchtower.service/start failed with result 'dependency'.`
 `watchtower.service` depends on `networking.service` and `docker.service` being up and running. The former may fail to load in a fresh install of Debian 10.5 if your network interface is not named eth0 (default defined). Edit `/etc/network/interfaces.d/setup` and restart `networking.service`.
+
+### Traefik: `404 page not found`
+With Tautulli especially no HTTP router is, bizarrly, ever created. Otherwise identical configuration to other services and have tried mixing and matching.
 
 ## TODO
 
