@@ -128,13 +128,12 @@ services:
     - traefik.http.routers.plex.tls.certresolver=mydnschallenge
     - traefik.http.services.plex.loadbalancer.server.port=32400
   portainer:
-    image: portainer/portainer
+    image: portainer/portainer-ce
     container_name: portainer
     depends_on:
     - traefik
     volumes:
     - ${CONFIG_PATH}/portainer/data:/data
-    - ${CONFIG_PATH}/shared:/shared
     - /var/run/docker.sock:/var/run/docker.sock
     env_file: .env
     command: -H unix:///var/run/docker.sock
