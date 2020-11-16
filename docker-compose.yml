@@ -191,7 +191,7 @@ services:
     - traefik
     volumes:
     - ${CONFIG_PATH}/radarr:/config
-    - ${MEDIA_PATH}movies:/movies
+    - ${MEDIA_PATH}/movies:/movies
     - ${DL_PATH}:/downloads
     ports:
     - 7878:7878
