@@ -36,9 +36,7 @@ services:
     labels:
     - traefik.enable=true
     - traefik.http.routers.grafana.rule=Host(`grafana.${DOMAIN}`)
-    - traefik.http.routers.grafana.entrypoints=websecure
     - traefik.http.routers.grafana.tls.certresolver=mydnschallenge
-    - traefik.http.services.grafana.loadbalancer.server.port=3000
   influxdb:
     image: influxdb:latest
     container_name: influxdb
@@ -67,9 +65,7 @@ services:
     labels:
     - traefik.enable=true
     - traefik.http.routers.jackett.rule=Host(`jackett.${DOMAIN}`)
-    - traefik.http.routers.jackett.entrypoints=websecure
     - traefik.http.routers.jackett.tls.certresolver=mydnschallenge
-    - traefik.http.services.jackett.loadbalancer.server.port=9117
   lidarr:
     image: linuxserver/lidarr
     container_name: lidarr
@@ -85,9 +81,7 @@ services:
     labels:
     - traefik.enable=true
     - traefik.http.routers.lidarr.rule=Host(`lidarr.${DOMAIN}`)
-    - traefik.http.routers.lidarr.entrypoints=websecure
     - traefik.http.routers.lidarr.tls.certresolver=mydnschallenge
-    - traefik.http.services.lidarr.loadbalancer.server.port=8686
   node-exporter:
     image: prom/node-exporter
     container_name: node-exporter
@@ -117,7 +111,7 @@ services:
     - /var/lib/plex/transcode:/transcode
     - ${MEDIA_PATH}/movies:/data/movies
     - ${MEDIA_PATH}/shows:/data/tvshows
-    hostname: watchtower.${DOMAIN}
+    hostname: watchtower
     ports:
     - 1900:1900/udp
     - 3005:3005/tcp
@@ -129,13 +123,8 @@ services:
     - 32414:32414/udp
     - 32469:32469/tcp
     env_file: .env
-    environment:
-    - PLEX_CLAIM=${CLAIM}
-    - ADVERTISE_IP="https://watchtower.${DOMAIN}"
     labels:
-    - traefik.enable=true
     - traefik.http.routers.plex.rule=Host(`watchtower.${DOMAIN}`)
-    - traefik.http.routers.plex.entrypoints=websecure
     - traefik.http.routers.plex.tls.certresolver=mydnschallenge
     - traefik.http.services.plex.loadbalancer.server.port=32400
   portainer:
@@ -152,8 +141,8 @@ services:
     labels:
     - traefik.enable=true
     - traefik.http.routers.portainer.rule=Host(`portainer.${DOMAIN}`)
-    - traefik.http.routers.portainer.entrypoints=websecure
     - traefik.http.routers.portainer.tls.certresolver=mydnschallenge
+    - traefik.http.services.portainer.loadbalancer.server.port=9000
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus
@@ -171,12 +160,12 @@ services:
     - --config.file=/etc/prometheus/prometheus.yml
   qbittorrentvpn:
     image: markusmcnugen/qbittorrentvpn
-    container_name: qbt
+    container_name: qbittorrentvpn
     privileged: true
     depends_on:
     - traefik
     volumes:
-    - ${CONFIG_PATH}/qbt:/config
+    - ${CONFIG_PATH}/qbittorrentvpn:/config
     - ${DL_PATH}:/downloads
     - ${MEDIA_PATH}:/media
     ports:
@@ -185,16 +174,14 @@ services:
     - 8999:8999/udp
     env_file: .env
     environment:
-    - LAN_NETWORK=192.168.1.0/24
+    - LAN_NETWORK=192.168.0.0/24
     - NAME_SERVERS=1.1.1.1,1.0.0.1
     - VPN_ENABLED=yes
     - WEBUI_PORT_ENV=8181
     labels:
     - traefik.enable=true
-    - traefik.http.routers.qbt.rule=Host(`qbt.${DOMAIN}`)
-    - traefik.http.routers.qbt.entrypoints=websecure
-    - traefik.http.routers.qbt.tls.certresolver=mydnschallenge
-    - traefik.http.services.qbt.loadbalancer.server.port=8181
+    - traefik.http.routers.qbittorrentvpn.rule=Host(`qbt.${DOMAIN}`)
+    - traefik.http.routers.qbittorrentvpn.tls.certresolver=mydnschallenge
   radarr:
     image: linuxserver/radarr
     container_name: radarr
@@ -212,9 +199,7 @@ services:
     labels:
     - traefik.enable=true
     - traefik.http.routers.radarr.rule=Host(`radarr.${DOMAIN}`)
-    - traefik.http.routers.radarr.entrypoints=websecure
     - traefik.http.routers.radarr.tls.certresolver=mydnschallenge
-    - traefik.http.services.radarr.loadbalancer.server.port=7878
   sonarr:
     image: linuxserver/sonarr
     container_name: sonarr
@@ -232,9 +217,7 @@ services:
     labels:
     - traefik.enable=true
     - traefik.http.routers.sonarr.rule=Host(`sonarr.${DOMAIN}`)
-    - traefik.http.routers.sonarr.entrypoints=websecure
     - traefik.http.routers.sonarr.tls.certresolver=mydnschallenge
-    - traefik.http.services.sonarr.loadbalancer.server.port=8989
   speedtest:
     image: atribe/speedtest-for-influxdb-and-grafana:latest
     container_name: speedtest
@@ -254,14 +237,12 @@ services:
     - ${CONFIG_PATH}/tautulli:/config
     - ${CONFIG_PATH}/Library/Application\ Support/Plex\ Media\ Server/Logs
     ports:
-    - 8180:8180
+    - 8180:8181
     env_file: .env
     labels:
     - traefik.enable=true
     - traefik.http.routers.tautulli.rule=Host(`tautulli.${DOMAIN}`)
-    - traefik.http.routers.tautulli.entrypoints=websecure
     - traefik.http.routers.tautulli.tls.certresolver=mydnschallenge
-    - traefik.http.services.tautulli.loadbalancer.server.port=8180
   telegraf:
     image: telegraf:latest
     container_name: telegraf
@@ -284,6 +265,7 @@ services:
     container_name: traefik
     volumes:
     - ${CONFIG_PATH}/letsencrypt:/letsencrypt
+    - ./traefik.toml:/traefik.toml
     - /var/run/docker.sock:/var/run/docker.sock:ro
     ports:
     - 80:80
@@ -293,17 +275,7 @@ services:
     environment:
     - CF_API_EMAIL=${EMAIL}
     - CF_API_KEY=${CF_API_KEY}
-    command:
-    - --api.insecure=true
-    - --providers.docker=true
-    - --providers.docker.exposedbydefault=false
-    - --entrypoints.web.address=:80
-    - --entrypoints.websecure.address=:443
-    - --certificatesresolvers.mydnschallenge.acme.dnschallenge=true
-    - --certificatesresolvers.mydnschallenge.acme.dnschallenge.provider=cloudflare
-    - --certificatesresolvers.mydnschallenge.acme.dnschallenge.resolvers=1.1.1.1:53,8.8.8.8:53
-    - --certificatesresolvers.mydnschallenge.acme.email=${EMAIL}
-    - --certificatesresolvers.mydnschallenge.acme.storage=/letsencrypt/acme.json
+    - TRAEFIK_CERTIFICATESRESOLVERS_MYDNSCHALLENGE_ACME_EMAIL=${EMAIL}
   varken:
     image: boerderij/varken:latest
     container_name: varken
@@ -323,5 +295,4 @@ services:
     labels:
     - traefik.enable=true
     - traefik.http.routers.whoami.rule=Host(`whoami.${DOMAIN}`)
-    - traefik.http.routers.whoami.entrypoints=websecure
     - traefik.http.routers.whoami.tls.certresolver=mydnschallenge
