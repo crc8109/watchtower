@@ -85,19 +85,16 @@ services:
   node-exporter:
     image: prom/node-exporter
     container_name: node-exporter
-    privileged: true
+    pid: host
     volumes:
-    - /proc:/host/proc:ro
-    - /sys:/host/sys:ro
-    - /:/rootfs:ro
+    - /:/host:ro,rslave
     ports:
     - 9100:9100
     env_file: .env
     command:
-    - --path.procfs=/host/proc
-    - --path.sysfs=/host/sys
+    - --path.rootfs=/host
     - --collector.filesystem.ignored-mount-points
-    - ^/(sys|proc|dev|host|etc|rootfs/var/lib/docker/containers|rootfs/var/lib/docker/overlay2|rootfs/run/docker/netns|rootfs/var/lib/docker/aufs)($$|/)
+    - ^/(sys|proc|dev/shm|run|host|etc|boot|var/lib/docker)
   ombi:
     image: ghcr.io/linuxserver/ombi
     container_name: ombi
@@ -200,6 +197,7 @@ services:
     - traefik.enable=true
     - traefik.http.routers.qbittorrentvpn.rule=Host(`qbt.${DOMAIN}`)
     - traefik.http.routers.qbittorrentvpn.tls.certresolver=mydnschallenge
+    - traefik.http.services.qbittorrentvpn.loadbalancer.server.port=8181
   radarr:
     image: linuxserver/radarr
     container_name: radarr
