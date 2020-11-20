@@ -60,7 +60,7 @@ services:
     - ${CONFIG_PATH}/jackett:/config
     - ${DL_PATH}:/downloads
     ports:
-    - 9117:9117/tcp
+    - 9117:9117
     env_file: .env
     labels:
     - traefik.enable=true
@@ -96,7 +96,7 @@ services:
     - --collector.filesystem.ignored-mount-points
     - ^/(sys|proc|dev/shm|run|host|etc|boot|var/lib/docker)
   ombi:
-    image: ghcr.io/linuxserver/ombi
+    image: linuxserver/ombi
     container_name: ombi
     env_file: .env
     volumes:
@@ -159,7 +159,7 @@ services:
     - traefik.http.routers.portainer.tls.certresolver=mydnschallenge
     - traefik.http.services.portainer.loadbalancer.server.port=9000
   prometheus:
-    image: prom/prometheus:latest
+    image: prom/prometheus
     container_name: prometheus
     user: ${PUID}
     depends_on:
@@ -185,12 +185,12 @@ services:
     - ${MEDIA_PATH}:/media
     ports:
     - 8181:8181
-    - 8999:8999/tcp
+    - 8999:8999
     - 8999:8999/udp
     env_file: .env
     environment:
-    - LAN_NETWORK=192.168.0.0/24
-    - NAME_SERVERS=1.1.1.1,1.0.0.1
+    - LAN_NETWORK=${LAN_NETWORK}
+    - NAME_SERVERS=${NAME_SERVERS}
     - VPN_ENABLED=yes
     - WEBUI_PORT_ENV=8181
     labels:
@@ -235,7 +235,7 @@ services:
     - traefik.http.routers.sonarr.rule=Host(`sonarr.${DOMAIN}`)
     - traefik.http.routers.sonarr.tls.certresolver=mydnschallenge
   speedtest:
-    image: atribe/speedtest-for-influxdb-and-grafana:latest
+    image: atribe/speedtest-for-influxdb-and-grafana
     container_name: speedtest
     depends_on:
     - influxdb
@@ -245,7 +245,7 @@ services:
     network_mode: host
     env_file: .env
   tautulli:
-    image: tautulli/tautulli:latest
+    image: tautulli/tautulli
     container_name: tautulli
     depends_on:
     - traefik
@@ -293,7 +293,7 @@ services:
     - CF_API_KEY=${CF_API_KEY}
     - TRAEFIK_CERTIFICATESRESOLVERS_MYDNSCHALLENGE_ACME_EMAIL=${EMAIL}
   varken:
-    image: boerderij/varken:latest
+    image: boerderij/varken
     container_name: varken
     depends_on:
     - influxdb
