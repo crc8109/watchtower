@@ -111,6 +111,7 @@ services:
   plex:
     image: plexinc/pms-docker
     container_name: plex
+    hostname: watchtower
     depends_on:
     - traefik
     devices:
@@ -121,9 +122,30 @@ services:
     - /var/lib/plex/transcode:/transcode
     - ${MEDIA_PATH}/movies:/data/movies
     - ${MEDIA_PATH}/shows:/data/tvshows
-    hostname: watchtower
-    network_mode: host
     env_file: .env
+    environment:
+    - ADVERTISE_IP=http://${HOST_IP}:32400/
+    - ALLOWED_NETWORK=${LAN_NETWORK},${DOCKER_NETWORK}
+    - PLEX_CLAIM=${PLEX_CLAIM}
+    - PLEX_GID=${PGID}
+    - PLEX_UID=${PUID}
+    - UMASK_SET=022
+    - VERSION=docker
+    ports:
+    - 32400:32400
+    - 3005:3005
+    - 8324:8324
+    - 32469:32469
+    - 1900:1900/udp
+    - 32410:32410/udp
+    - 32412:32412/udp
+    - 32413:32413/udp
+    - 32414:32414/udp
+    labels:
+    - traefik.enable=true
+    - traefik.http.routers.plex.rule=Host(`plex.${DOMAIN}`)
+    - traefik.http.routers.plex.tls.certresolver=mydnschallenge
+    - traefik.http.services.plex.loadbalancer.server.port=32400
   portainer:
     image: portainer/portainer-ce
     container_name: portainer

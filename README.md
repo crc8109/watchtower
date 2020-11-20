@@ -40,15 +40,19 @@ ports:
 ```
 
 ### Traefik: `Bad Gateway`
-Validate in Traefik dashboard that the HTTP routers/services are active and accurate. With auto-discovery, Traefik will create an HTTP service pointing to the first defined port of the container which may not be the right port for web traffic (e.g. port 8000 vs 9000 on portainer).
+Validate in Traefik dashboard that the HTTP routers/services are active and accurate. With auto-discovery, Traefik will create an HTTP service pointing to the first-defined\* port of the container which may not be the right port for web traffic (e.g. port 8000 vs 9000 on portainer).
+
+\* Not guaranteed. Witnessed qbittorrentvpn HTTP service being set to container\_ip:8080 despite port 8080 not being defined (expected 8181 as defined first).
 
 ### Why is Plex in `host` network mode?
-My smart TV is unable to connect to Plex when in `bridge` mode. All other devices (PCs, tablets, smartphones) work fine in either mode. With `network_mode: host`, Plex will be attached to the home network through the Linux host (sharing its IP and reachable on exposed ports). As such, Traefik can no longer dictate routes to the underlying container. A bit of an inconvenience but Plex server discovery works well enough.
+~~My smart TV is unable to connect to Plex when in `bridge` mode. All other devices (PCs, tablets, smartphones) work fine in either mode. With `network_mode: host`, Plex will be attached to the home network through the Linux host (sharing its IP and reachable on exposed ports). As such, Traefik can no longer dictate routes to the underlying container and so the host IP:port must be used to reach Plex via browser. Also lose out on the HTTPS certs from Traefik + Let's Encrypt. A bit of an inconvenience but Plex server discovery works well enough.~~
+
+Fixed (11/19): Switching to bridge network mode seems to conflict with the previous (host network mode) state/config. Had to generate a new Plex token, use the token within the 4min lifespan of the token, and create as a new server. Additionally, double-quoting environment variable values (namely PLEX\_CLAIM) causes parsing issues when the initialization process registers a new token.
 
 ## TODO
 
 * ~~Automate TLS renewal using Let's Encrypt~~
-* Complete Grafana dashboard
+* ~~Complete Grafana dashboard~~
 * Convert setup.sh to Makefile
 * ~~Add Ombi for notifications~~
 * ~~Add Lidarr for music procurement~~
