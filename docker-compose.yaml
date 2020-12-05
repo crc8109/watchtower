@@ -1,4 +1,4 @@
-version: "3.3"
+version: "2.4"
 services:
   alertmanager:
     image: prom/alertmanager
@@ -106,13 +106,16 @@ services:
     - traefik.http.routers.ombi.rule=Host(`ombi.${DOMAIN}`)
     - traefik.http.routers.ombi.tls.certresolver=mydnschallenge
   plex:
-    image: plexinc/pms-docker
+    runtime: nvidia
+    image: plexinc/pms-docker:plexpass
     container_name: plex
     hostname: watchtower
     depends_on:
     - traefik
     devices:
-    - /dev/dri:/dev/dri
+    #- /dev/dri # for iGPU
+    - /dev/dri/card0:/dev/dri/card0
+    - /dev/dri/renderD128:/dev/dri/renderD128
     volumes:
     - ${CONFIG_PATH}/plex:/config
     - /var/lib/plex/data:/data
@@ -122,7 +125,8 @@ services:
     env_file: .env
     environment:
     - ADVERTISE_IP=http://${HOST_IP}:32400/
-    - ALLOWED_NETWORK=${LAN_NETWORK},${DOCKER_NETWORK}
+    - NVIDIA_DRIVER_CAPABILITIES=all
+    - NVIDIA_VISIBLE_DEVICES=all
     - PLEX_CLAIM=${PLEX_CLAIM}
     - PLEX_GID=${PGID}
     - PLEX_UID=${PUID}
@@ -161,7 +165,7 @@ services:
   prometheus:
     image: prom/prometheus
     container_name: prometheus
-    user: ${PUID}
+    user: "${PUID}:${PGID}"
     depends_on:
     - cadvisor
     - node-exporter
@@ -171,8 +175,6 @@ services:
     ports:
     - 9090:9090
     env_file: .env
-    command:
-    - --config.file=/etc/prometheus/prometheus.yml
   qbittorrentvpn:
     image: markusmcnugen/qbittorrentvpn
     container_name: qbittorrentvpn
@@ -184,7 +186,7 @@ services:
     - ${DL_PATH}:/downloads
     - ${MEDIA_PATH}:/media
     ports:
-    - 8181:8181
+    - 8181:8080
     - 8999:8999
     - 8999:8999/udp
     env_file: .env
@@ -192,12 +194,11 @@ services:
     - LAN_NETWORK=${LAN_NETWORK}
     - NAME_SERVERS=${NAME_SERVERS}
     - VPN_ENABLED=yes
-    - WEBUI_PORT_ENV=8181
+    - WEBUI_PORT_ENV=8080
     labels:
     - traefik.enable=true
     - traefik.http.routers.qbittorrentvpn.rule=Host(`qbt.${DOMAIN}`)
     - traefik.http.routers.qbittorrentvpn.tls.certresolver=mydnschallenge
-    - traefik.http.services.qbittorrentvpn.loadbalancer.server.port=8181
   radarr:
     image: linuxserver/radarr
     container_name: radarr
