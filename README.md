@@ -49,6 +49,11 @@ Validate in Traefik dashboard that the HTTP routers/services are active and accu
 
 Fixed (11/19): Switching to bridge network mode seems to conflict with the previous (host network mode) state/config. Had to generate a new Plex token, use the token within the 4min lifespan of the token, and create as a new server. Additionally, double-quoting environment variable values (namely PLEX\_CLAIM) causes parsing issues when the initialization process registers a new token.
 
+### Plex: LAN Network (local vs remote streaming)
+Plex identifies local devices by comparing subnets. Since Docker provides a largely isolated network (e.g. 172.17.0.0/16), separate from the home network (e.g. 192.168.0.0/24), all clients are considered remote. With remote streams configured to a limit of 8 Mb/s, virtually all content will require transcoding. Transcoding 4K to 4K is a no-no. Direct Play is ideal.
+
+Unfortunately, LAN\_NETWORK env var does not seem to equate to the `LAN Networks` field in the Plex UI (Settings -> Network). Set it (e.g. 192.168.0.0/24) in the latter and verify in Plex Dashboard or Tautulli that the local device is recognized as a local stream.
+
 ## TODO
 
 * ~~Automate TLS renewal using Let's Encrypt~~
