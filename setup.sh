@@ -7,7 +7,7 @@
 # https://github.com/jovalle/watchtower
 #
 
-VERSION="v0.0.2"
+VERSION="v1"
 
 #
 # Output usage information
@@ -21,7 +21,7 @@ usage() {
     -h, --help           output help information
   Commands:
     prepare              install required packages
-    deploy               onboard zfs pools and service
+    deploy               create and start service
     delete               stop and disable service
 EOF
 }
@@ -50,50 +50,26 @@ version() {
 #
 
 prepare() {
-
-  add-apt-repository 'deb http://deb.debian.org/debian buster-backports main contrib non-free'
-
-  apt update -y
+  apt update
   apt upgrade -y
-
   apt install -y \
     apache2-utils \
+    curl \
     dnsutils \
     docker-compose \
-    firmware-realtek \
-    git \
-    glances \
-    htop \
-    iotop \
-    lm-sensors \
     mediainfo \
     ncdu \
     net-tools \
-    samba \
+    rsync \
     software-properties-common \
-    ssh \
-    tmux \
-    vim \
-    zfs-dkms \
-    zfsutils-linux
-
-  modprobe zfs
-
-  [[ ! -d $HOME/.ssh ]] && mkdir -p $HOME/.ssh
-  curl -L https://github.com/jovalle.keys >> ~/.ssh/authorized_keys
+    vim
 }
 
 #
-# Configure zfs, systemd unit, Samba
+# Configure systemd unit
 #
 
 deploy() {
-  command -v sensors-detect 2>/dev/null 1>&2 && sensors-detect --auto || warn lm-sensors not installed
-
-  command -v zpool 2>/dev/null 1>&2 || abort zpool not installed
-
-  zpool import -a || abort "Failed to import pools"
-
   test -d /etc/watchtower || abort "jovalle/watchtower must reside in /etc/watchtower"
 
   if [[ ! -f /etc/systemd/system/watchtower.service ]]; then
@@ -113,13 +89,6 @@ deploy() {
   fi
 
   systemctl enable watchtower
-
-  if [[ -f /etc/samba/smb.conf && ! -L /etc/samba/smb.conf ]]; then
-    mv /etc/samba/smb.conf /etc/samba/smb.conf.$(date +%s)
-    ln -s /etc/watchtower/smb.conf /etc/samba/smb.conf
-  fi
-
-  systemctl restart smbd
 }
 
 #
