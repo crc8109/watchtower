@@ -7,14 +7,30 @@ Configurations for my HTPC.
 Set to `.env`. Referenced in the systemd unit and in each Docker Compose service that supports PUID/PGID env vars. Contains much of the following:
 
 ```
-DOMAIN=example.com
-PGID=1000
 PUID=1000
+PGID=1000
 TZ="America/New_York"
-CONFIG_PATH=/etc/watchtower
-MEDIA_PATH=/var/lib/media
-DL_PATH=/tmp
+EMAIL=jay@example.com
+DOMAIN=example.com
+CF_API_KEY=abcdef
+HOST_IP=192.168.0.2
+PLEX_CLAIM=claim-1234
+LAN_NETWORK=192.168.0.0/24
+NAME_SERVERS=1.1.1.1,1.0.0.1
+MAXMIND_LICENSE_KEY=abcdef
+INFLUXDB_USER=admin
+INFLUXDB_PASS=adminadmin
+TAUTULLI_API_KEY=abcdef
+SONARR_API_KEY=abcdef
+RADARR_API_KEY=abcdef
+LIDARR_API_KEY=abcdef
+OMBI_API_TOKEN=abcdef
 ```
+
+## Config Location
+Plex creates an incredible number of files (tens of thousands of <10MB files>) which will hamper performance on spinners as it executes housekeeping activities. To avoid saturating the notoriously little bandwidth spinners provide, config directories are stored on the local, SSD-backed, filesystem.
+
+TODO: Automate backup of config directories (compressed into a singular archive for easy transference) to replicated storage.
 
 ## `network_mode: host`
 Use when 127.0.0.1 is needed, like when referencing `speedtest` service endpoint for `telegraf`.
@@ -53,12 +69,3 @@ Fixed (11/19): Switching to bridge network mode seems to conflict with the previ
 Plex identifies local devices by comparing subnets. Since Docker provides a largely isolated network (e.g. 172.17.0.0/16), separate from the home network (e.g. 192.168.0.0/24), all clients are considered remote. With remote streams configured to a limit of 8 Mb/s, virtually all content will require transcoding. Transcoding 4K to 4K is a no-no. Direct Play is ideal.
 
 Unfortunately, LAN\_NETWORK env var does not seem to equate to the `LAN Networks` field in the Plex UI (Settings -> Network). Set it (e.g. 192.168.0.0/24) in the latter and verify in Plex Dashboard or Tautulli that the local device is recognized as a local stream.
-
-## TODO
-
-* ~~Automate TLS renewal using Let's Encrypt~~
-* ~~Complete Grafana dashboard~~
-* Convert setup.sh to Makefile
-* ~~Add Ombi for notifications~~
-* ~~Add Lidarr for music procurement~~
-* ~~Add Tautulli for monitoring Plex~~

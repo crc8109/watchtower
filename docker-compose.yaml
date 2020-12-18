@@ -24,15 +24,15 @@ services:
     depends_on:
     - prometheus
     - traefik
-    user: ${PUID}
+    user: "1000"
     volumes:
-    - ${CONFIG_PATH}/grafana:/var/lib/grafana
+    - ./config/grafana:/var/lib/grafana
     - ./grafana/provisioning/:/etc/grafana/provisioning/
     ports:
     - 3000:3000
     env_file: .env
     environment:
-    - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource,grafana-worldmap-panel,grafana-piechart-panel
+    - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource,grafana-worldmap-panel,grafana-piechart-panel,vonage-status-panel
     labels:
     - traefik.enable=true
     - traefik.http.routers.grafana.rule=Host(`grafana.${DOMAIN}`)
@@ -42,7 +42,7 @@ services:
     container_name: influxdb
     volumes:
     - ./influxdb.conf:/etc/influxdb/influxdb.conf:ro
-    - ${CONFIG_PATH}/influxdb/db:/var/lib/influxdb
+    - ./config/influxdb/db:/var/lib/influxdb
     ports:
     - 8086:8086
     - 8089:8089/udp
@@ -57,8 +57,8 @@ services:
     depends_on:
     - traefik
     volumes:
-    - ${CONFIG_PATH}/jackett:/config
-    - ${DL_PATH}:/downloads
+    - ./config/jackett:/config
+    - /var/lib/watchtower/downloads:/downloads
     ports:
     - 9117:9117
     env_file: .env
@@ -72,9 +72,9 @@ services:
     depends_on:
     - traefik
     volumes:
-    - ${CONFIG_PATH}/lidarr:/config
-    - ${DL_PATH}:/downloads
-    - ${MEDIA_PATH}/music:/music
+    - ./config/lidarr:/config
+    - /var/lib/watchtower/downloads:/downloads
+    - /var/lib/watchtower/audio:/music
     ports:
     - 8686:8686
     env_file: .env
@@ -100,7 +100,7 @@ services:
     container_name: ombi
     env_file: .env
     volumes:
-    - ${CONFIG_PATH}/ombi:/config
+    - ./config/ombi:/config
     labels:
     - traefik.enable=true
     - traefik.http.routers.ombi.rule=Host(`ombi.${DOMAIN}`)
@@ -113,23 +113,21 @@ services:
     depends_on:
     - traefik
     devices:
-    #- /dev/dri # for iGPU
-    - /dev/dri/card0:/dev/dri/card0
-    - /dev/dri/renderD128:/dev/dri/renderD128
+    - /dev/dri
     volumes:
-    - ${CONFIG_PATH}/plex:/config
+    - ./config/plex:/config
     - /var/lib/plex/data:/data
     - /var/lib/plex/transcode:/transcode
-    - ${MEDIA_PATH}/movies:/data/movies
-    - ${MEDIA_PATH}/shows:/data/tvshows
+    - /var/lib/watchtower/movies:/data/movies
+    - /var/lib/watchtower/shows:/data/tvshows
     env_file: .env
     environment:
     - ADVERTISE_IP=http://${HOST_IP}:32400/
     - NVIDIA_DRIVER_CAPABILITIES=all
     - NVIDIA_VISIBLE_DEVICES=all
     - PLEX_CLAIM=${PLEX_CLAIM}
-    - PLEX_GID=${PGID}
-    - PLEX_UID=${PUID}
+    - PLEX_GID=1000
+    - PLEX_UID=1000
     - UMASK_SET=022
     - VERSION=docker
     ports:
@@ -153,7 +151,7 @@ services:
     depends_on:
     - traefik
     volumes:
-    - ${CONFIG_PATH}/portainer/data:/data
+    - ./config/portainer/data:/data
     - /var/run/docker.sock:/var/run/docker.sock
     env_file: .env
     command: -H unix:///var/run/docker.sock
@@ -165,12 +163,12 @@ services:
   prometheus:
     image: prom/prometheus
     container_name: prometheus
-    user: "${PUID}:${PGID}"
+    user: "1000:1000"
     depends_on:
     - cadvisor
     - node-exporter
     volumes:
-    - ${CONFIG_PATH}/prometheus:/prometheus
+    - ./config/prometheus:/prometheus
     - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
     ports:
     - 9090:9090
@@ -182,9 +180,9 @@ services:
     depends_on:
     - traefik
     volumes:
-    - ${CONFIG_PATH}/qbittorrentvpn:/config
-    - ${DL_PATH}:/downloads
-    - ${MEDIA_PATH}:/media
+    - ./config/qbittorrentvpn:/config
+    - /var/lib/watchtower/downloads:/downloads
+    - /var/lib/watchtower:/media
     ports:
     - 8181:8080
     - 8999:8999
@@ -200,16 +198,16 @@ services:
     - traefik.http.routers.qbittorrentvpn.rule=Host(`qbt.${DOMAIN}`)
     - traefik.http.routers.qbittorrentvpn.tls.certresolver=mydnschallenge
   radarr:
-    image: linuxserver/radarr
+    image: linuxserver/radarr:nightly
     container_name: radarr
     depends_on:
     - jackett
     - qbittorrentvpn
     - traefik
     volumes:
-    - ${CONFIG_PATH}/radarr:/config
-    - ${MEDIA_PATH}/movies:/movies
-    - ${DL_PATH}:/downloads
+    - ./config/radarr:/config
+    - /var/lib/watchtower/movies:/movies
+    - /var/lib/watchtower/downloads:/downloads
     ports:
     - 7878:7878
     env_file: .env
@@ -218,16 +216,16 @@ services:
     - traefik.http.routers.radarr.rule=Host(`radarr.${DOMAIN}`)
     - traefik.http.routers.radarr.tls.certresolver=mydnschallenge
   sonarr:
-    image: linuxserver/sonarr
+    image: linuxserver/sonarr:preview
     container_name: sonarr
     depends_on:
     - jackett
     - qbittorrentvpn
     - traefik
     volumes:
-    - ${CONFIG_PATH}/sonarr:/config
-    - ${DL_PATH}:/downloads
-    - ${MEDIA_PATH}/shows:/tv
+    - ./config/sonarr:/config
+    - /var/lib/watchtower/downloads:/downloads
+    - /var/lib/watchtower/shows:/tv
     ports:
     - 8989:8989
     env_file: .env
@@ -235,24 +233,14 @@ services:
     - traefik.enable=true
     - traefik.http.routers.sonarr.rule=Host(`sonarr.${DOMAIN}`)
     - traefik.http.routers.sonarr.tls.certresolver=mydnschallenge
-  speedtest:
-    image: atribe/speedtest-for-influxdb-and-grafana
-    container_name: speedtest
-    depends_on:
-    - influxdb
-    restart: unless-stopped
-    volumes:
-    - ./speedtest.ini:/src/config.ini:ro
-    network_mode: host
-    env_file: .env
   tautulli:
     image: tautulli/tautulli
     container_name: tautulli
     depends_on:
     - traefik
     volumes:
-    - ${CONFIG_PATH}/tautulli:/config
-    - ${CONFIG_PATH}/Library/Application\ Support/Plex\ Media\ Server/Logs
+    - ./config/tautulli:/config
+    - ./config/Library/Application\ Support/Plex\ Media\ Server/Logs
     ports:
     - 8180:8181
     env_file: .env
@@ -261,10 +249,9 @@ services:
     - traefik.http.routers.tautulli.rule=Host(`tautulli.${DOMAIN}`)
     - traefik.http.routers.tautulli.tls.certresolver=mydnschallenge
   telegraf:
+    runtime: nvidia
     image: telegraf:latest
     container_name: telegraf
-    depends_on:
-    - speedtest
     volumes:
     - ./telegraf.conf:/etc/telegraf/telegraf.conf:ro
     - /var/run/docker.sock:/var/run/docker.sock:ro
@@ -277,11 +264,13 @@ services:
     - HOST_PROC=/rootfs/proc
     - HOST_SYS=/rootfs/sys
     - HOST_ETC=/rootfs/etc
+    - NVIDIA_VISIBLE_DEVICES=all
+    - NVIDIA_DRIVER_CAPABILITIES=all
   traefik:
     image: traefik:v2.2
     container_name: traefik
     volumes:
-    - ${CONFIG_PATH}/letsencrypt:/letsencrypt
+    - ./config/letsencrypt:/letsencrypt
     - ./traefik.toml:/traefik.toml
     - /var/run/docker.sock:/var/run/docker.sock:ro
     ports:
@@ -299,11 +288,74 @@ services:
     depends_on:
     - influxdb
     - telegraf
-    user: ${PUID}
+    user: "1000"
     volumes:
-    - ${CONFIG_PATH}/varken:/config
+    - ./config/varken:/config
     network_mode: host
     env_file: .env
+    environment:
+    - TZ=America/Chicago
+    - VRKN_GLOBAL_SONARR_SERVER_IDS=1
+    - VRKN_GLOBAL_RADARR_SERVER_IDS=1
+    - VRKN_GLOBAL_LIDARR_SERVER_IDS=1
+    - VRKN_GLOBAL_TAUTULLI_SERVER_IDS=1
+    - VRKN_GLOBAL_OMBI_SERVER_IDS=1
+    - VRKN_GLOBAL_SICKCHILL_SERVER_IDS=false
+    - VRKN_GLOBAL_UNIFI_SERVER_IDS=false
+    - VRKN_GLOBAL_MAXMIND_LICENSE_KEY=${MAXMIND_LICENSE_KEY}
+    - VRKN_INFLUXDB_URL=influxdb
+    - VRKN_INFLUXDB_PORT=8086
+    - VRKN_INFLUXDB_SSL=false
+    - VRKN_INFLUXDB_VERIFY_SSL=false
+    - VRKN_INFLUXDB_USERNAME=${INFLUXDB_USER}
+    - VRKN_INFLUXDB_PASSWORD=${INFLUXDB_PASS}
+    - VRKN_TAUTULLI_1_URL=tautulli.${DOMAIN}
+    - VRKN_TAUTULLI_1_FALLBACK_IP=1.1.1.1
+    - VRKN_TAUTULLI_1_APIKEY=${TAUTULLI_API_KEY}
+    - VRKN_TAUTULLI_1_SSL=true
+    - VRKN_TAUTULLI_1_VERIFY_SSL=false
+    - VRKN_TAUTULLI_1_GET_ACTIVITY=true
+    - VRKN_TAUTULLI_1_GET_ACTIVITY_RUN_SECONDS=30
+    - VRKN_TAUTULLI_1_GET_STATS=true
+    - VRKN_TAUTULLI_1_GET_STATS_RUN_SECONDS=3600
+    - VRKN_SONARR_1_URL=sonarr.${DOMAIN}
+    - VRKN_SONARR_1_APIKEY=${SONARR_API_KEY}
+    - VRKN_SONARR_1_SSL=true
+    - VRKN_SONARR_1_VERIFY_SSL=false
+    - VRKN_SONARR_1_MISSING_DAYS=7
+    - VRKN_SONARR_1_MISSING_DAYS_RUN_SECONDS=300
+    - VRKN_SONARR_1_FUTURE_DAYS=1
+    - VRKN_SONARR_1_FUTURE_DAYS_RUN_SECONDS=300
+    - VRKN_SONARR_1_QUEUE=true
+    - VRKN_SONARR_1_QUEUE_RUN_SECONDS=300
+    - VRKN_RADARR_1_URL=radarr.${DOMAIN}
+    - VRKN_RADARR_1_APIKEY=${RADARR_API_KEY}
+    - VRKN_RADARR_1_SSL=true
+    - VRKN_RADARR_1_VERIFY_SSL=false
+    - VRKN_RADARR_1_QUEUE=true
+    - VRKN_RADARR_1_QUEUE_RUN_SECONDS=300
+    - VRKN_RADARR_1_GET_MISSING=true
+    - VRKN_RADARR_1_GET_MISSING_RUN_SECONDS=300
+    - VRKN_LIDARR_1_URL=lidarr.${DOMAIN}
+    - VRKN_LIDARR_1_APIKEY=${LIDARR_API_KEY}
+    - VRKN_LIDARR_1_SSL=true
+    - VRKN_LIDARR_1_VERIFY_SSL=false
+    - VRKN_LIDARR_1_MISSING_DAYS=30
+    - VRKN_LIDARR_1_MISSING_DAYS_RUN_SECONDS=300
+    - VRKN_LIDARR_1_FUTURE_DAYS=30
+    - VRKN_LIDARR_1_FUTURE_DAYS_RUN_SECONDS=300
+    - VRKN_LIDARR_1_QUEUE=true
+    - VRKN_LIDARR_1_QUEUE_RUN_SECONDS=300
+    - VRKN_OMBI_1_URL=ombi.${DOMAIN}
+    - VRKN_OMBI_1_APIKEY=${OMBI_API_TOKEN}
+    - VRKN_OMBI_1_SSL=true
+    - VRKN_OMBI_1_VERIFY_SSL=false
+    - VRKN_OMBI_1_GET_REQUEST_TYPE_COUNTS=true
+    - VRKN_OMBI_1_REQUEST_TYPE_RUN_SECONDS=300
+    - VRKN_OMBI_1_GET_REQUEST_TOTAL_COUNTS=true
+    - VRKN_OMBI_1_REQUEST_TOTAL_RUN_SECONDS=300
+    - VRKN_OMBI_1_GET_ISSUE_STATUS_COUNTS=true
+    - VRKN_OMBI_1_ISSUE_STATUS_RUN_SECONDS=300
   whoami:
     image: containous/whoami
     container_name: whoami
