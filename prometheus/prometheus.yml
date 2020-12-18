@@ -12,6 +12,11 @@ scrape_configs:
   static_configs:
   - targets:
     - prometheus:9090
+- job_name: pihole
+  scrape_interval: 5s
+  static_configs:
+  - targets:
+    - ironheart:9617
 - job_name: node-exporter
   scrape_interval: 5s
   static_configs:
