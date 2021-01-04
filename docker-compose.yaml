@@ -35,7 +35,6 @@ services:
     - traefik.enable=true
     - traefik.http.routers.ombi.rule=Host(`ombi.${DOMAIN}`)
   plex:
-    runtime: nvidia
     image: plexinc/pms-docker:plexpass
     container_name: plex
     hostname: watchtower
@@ -103,7 +102,7 @@ services:
     - WEBUI_PORT_ENV=8080
     labels:
     - traefik.enable=true
-    - traefik.http.routers.qbittorrentvpn.rule=Host(`qbt.${DOMAIN}`)
+    - traefik.http.routers.qbittorrentvpn.rule=Host(`qbittorrent.${DOMAIN}`)
   radarr:
     image: linuxserver/radarr:nightly
     container_name: radarr
