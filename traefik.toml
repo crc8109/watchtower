@@ -15,11 +15,3 @@
 
 [entryPoints.websecure]
   address = ":443"
-
-[certificatesResolvers.mydnschallenge.acme]
-  storage = "/letsencrypt/acme.json"
-
-  [certificatesResolvers.mydnschallenge.acme.dnsChallenge]
-    provider = "cloudflare"
-    resolvers = ["1.1.1.1:53", "8.8.8.8:53"]
-    delayBeforeCheck = 0

@@ -7,24 +7,21 @@ Configurations for my HTPC.
 Set to `.env`. Referenced in the systemd unit and in each Docker Compose service that supports PUID/PGID env vars. Contains much of the following:
 
 ```
+# general
 PUID=1000
 PGID=1000
 TZ="America/New_York"
-EMAIL=jay@example.com
+
+# for traefik
 DOMAIN=example.com
-CF_API_KEY=abcdef
-HOST_IP=192.168.0.2
+
+# for plex
 PLEX_CLAIM=claim-1234
+HOST_IP=192.168.0.2
 LAN_NETWORK=192.168.0.0/24
+
+# for qbittorrent
 NAME_SERVERS=1.1.1.1,1.0.0.1
-MAXMIND_LICENSE_KEY=abcdef
-INFLUXDB_USER=admin
-INFLUXDB_PASS=adminadmin
-TAUTULLI_API_KEY=abcdef
-SONARR_API_KEY=abcdef
-RADARR_API_KEY=abcdef
-LIDARR_API_KEY=abcdef
-OMBI_API_TOKEN=abcdef
 ```
 
 ## Config Location
@@ -35,25 +32,10 @@ TODO: Automate backup of config directories (compressed into a singular archive 
 ## `network_mode: host`
 Use when 127.0.0.1 is needed, like when referencing `speedtest` service endpoint for `telegraf`.
 
+## qBittorrent
+You must supply an .ovpn and credential file in the openvpn directory (e.g. config/qbittorrent/openvpn/server.ovpn). Otherwise disable VPN by setting `VPN_ENABLED=no`
+
 ## Known Issues
-
-### `watchtower.service: Job watchtower.service/start failed with result 'dependency'.`
-`watchtower.service` depends on `networking.service` and `docker.service` being up and running. The former may fail to load in a fresh install of Debian 10.5 if your network interface is not named eth0 (default defined). Edit `/etc/network/interfaces.d/setup` and restart `networking.service`.
-
-### Traefik: `404 page not found`
-Enable Traefik on each Docker Compose Service.
-
-```yaml
-labels:
-- traefik.enable=true
-```
-
-Verify the ports are correct and conflicts are addressed. For example, `qbittorrentvpn` and `tautulli` use port 8181 out of the box. One workaround is exposing 8180 at the host level which points to 8181 at the container level.
-
-```yaml
-ports:
-- 8180:8181
-```
 
 ### Traefik: `Bad Gateway`
 Validate in Traefik dashboard that the HTTP routers/services are active and accurate. With auto-discovery, Traefik will create an HTTP service pointing to the first-defined\* port of the container which may not be the right port for web traffic (e.g. port 8000 vs 9000 on portainer).

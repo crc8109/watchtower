@@ -2,8 +2,8 @@
 
 [Unit]
 Description=Watchtower Composition
-Requires=docker.service networking.service
-After=docker.service networking.service
+Requires=docker.service
+After=docker.service
 
 [Service]
 Type=simple
