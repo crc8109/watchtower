@@ -18,7 +18,7 @@ services:
     volumes:
     - ./config/lidarr:/config
     - /var/lib/watchtower/downloads:/downloads
-    - /var/lib/watchtower/audio:/music
+    - /var/lib/watchtower/music:/music
     ports:
     - 8686:8686
     env_file: .env
@@ -45,7 +45,7 @@ services:
     - /var/lib/plex/data:/data
     - /var/lib/plex/transcode:/transcode
     - /var/lib/watchtower/movies:/data/movies
-    - /var/lib/watchtower/shows:/data/tvshows
+    - /var/lib/watchtower/tv:/data/tv
     env_file: .env
     environment:
     - ADVERTISE_IP=http://${HOST_IP}:32400/
@@ -83,7 +83,7 @@ services:
     - traefik.http.routers.portainer.rule=Host(`portainer.${DOMAIN}`)
     - traefik.http.services.portainer.loadbalancer.server.port=9000
   qbittorrent:
-    image: jovalle/qbittorrent
+    image: jovalle/qbittorrent-openvpn
     container_name: qbittorrent
     privileged: true
     volumes:
@@ -102,13 +102,13 @@ services:
     - WEBUI_PORT_ENV=8080
     labels:
     - traefik.enable=true
-    - traefik.http.routers.qbittorrentvpn.rule=Host(`qbittorrent.${DOMAIN}`)
+    - traefik.http.routers.qbittorrent.rule=Host(`qbittorrent.${DOMAIN}`)
   radarr:
-    image: linuxserver/radarr:nightly
+    image: linuxserver/radarr
     container_name: radarr
     depends_on:
     - jackett
-    - qbittorrentvpn
+    - qbittorrent
     volumes:
     - ./config/radarr:/config
     - /var/lib/watchtower/movies:/movies
@@ -120,15 +120,15 @@ services:
     - traefik.enable=true
     - traefik.http.routers.radarr.rule=Host(`radarr.${DOMAIN}`)
   sonarr:
-    image: linuxserver/sonarr:preview
+    image: linuxserver/sonarr
     container_name: sonarr
     depends_on:
     - jackett
-    - qbittorrentvpn
+    - qbittorrent
     volumes:
     - ./config/sonarr:/config
     - /var/lib/watchtower/downloads:/downloads
-    - /var/lib/watchtower/shows:/tv
+    - /var/lib/watchtower/tv:/tv
     ports:
     - 8989:8989
     env_file: .env
