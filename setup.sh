@@ -70,7 +70,7 @@ prepare() {
 #
 
 deploy() {
-  test -d /etc/watchtower || abort "jovalle/watchtower must reside in /etc/watchtower"
+  test -d /etc/watchtower || abort "${USER}/watchtower must reside in /etc/watchtower"
 
   if [[ ! -f /etc/systemd/system/watchtower.service ]]; then
     pushd /etc/systemd/system
